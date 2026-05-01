@@ -12,6 +12,18 @@ const DEPTS = [
 ];
 const MBTIS = ['INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP', 'ISTJ', 'ISTP', 'ESTJ', 'ESTP', 'ISFJ', 'ISFP', 'ESFJ', 'ESFP'];
 
+// ✅ 컴포넌트 밖에 정의해야 포커스 안 풀림
+const FormGroup = ({ label, req, children }) => (
+  <div className="form-group">
+    <label>{label}{req && <span style={{ color: 'var(--primary)' }}> *</span>}</label>
+    {children}
+  </div>
+);
+
+const Row2 = ({ children }) => (
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>{children}</div>
+);
+
 export default function Register() {
   const { register, members } = useAuth();
   const navigate = useNavigate();
@@ -46,8 +58,6 @@ export default function Register() {
     else { setIdMsg('✅ 사용 가능한 아이디입니다.'); setIdChecked(true); }
   }, [id, members]);
 
-  const handleIdChange = (e) => { setId(e.target.value); setIdChecked(false); setIdMsg(''); };
-
   const submit = () => {
     if (!idChecked) { setError('아이디 중복체크를 해주세요.'); return; }
     if (password !== password2) { setError('비밀번호가 일치하지 않습니다.'); return; }
@@ -58,13 +68,6 @@ export default function Register() {
     setDone(true);
     setTimeout(() => navigate('/login'), 2000);
   };
-
-  const F = ({ label, req, children }) => (
-    <div className="form-group">
-      <label>{label}{req && <span style={{ color: 'var(--primary)' }}> *</span>}</label>
-      {children}
-    </div>
-  );
 
   return (
     <>
@@ -82,7 +85,7 @@ export default function Register() {
           <div className="form-group">
             <label>아이디 <span style={{ color: 'var(--primary)' }}>*</span></label>
             <div style={{ display: 'flex', gap: 8 }}>
-              <input placeholder="영문/숫자 조합" value={id} onChange={handleIdChange} autoComplete="off" style={{ flex: 1 }} />
+              <input placeholder="영문/숫자 조합" value={id} onChange={e => { setId(e.target.value); setIdChecked(false); setIdMsg(''); }} autoComplete="off" style={{ flex: 1 }} />
               <button onClick={checkId} style={{ width: 'auto', padding: '0 16px', background: 'var(--secondary)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
                 중복체크
               </button>
@@ -90,77 +93,77 @@ export default function Register() {
             {idMsg && <span style={{ fontSize: 13, color: idChecked ? '#15803d' : '#e24b4a', marginTop: 4 }}>{idMsg}</span>}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-            <F label="비밀번호" req>
+          <Row2>
+            <FormGroup label="비밀번호" req>
               <input type="password" placeholder="4자 이상" value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" />
-            </F>
-            <F label="비밀번호 확인" req>
+            </FormGroup>
+            <FormGroup label="비밀번호 확인" req>
               <input type="password" placeholder="다시 입력" value={password2} onChange={e => setPassword2(e.target.value)} autoComplete="new-password" />
-            </F>
-          </div>
+            </FormGroup>
+          </Row2>
 
           <div className="form-section-title">👤 기본 정보</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-            <F label="이름" req>
+          <Row2>
+            <FormGroup label="이름" req>
               <input placeholder="실명" value={name} onChange={e => setName(e.target.value)} />
-            </F>
-            <F label="이름 공개 여부">
+            </FormGroup>
+            <FormGroup label="이름 공개 여부">
               <select value={namePublic} onChange={e => setNamePublic(e.target.value === 'true')}>
                 <option value="true">공개</option>
                 <option value="false">비공개</option>
               </select>
-            </F>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-            <F label="성별" req>
+            </FormGroup>
+          </Row2>
+          <Row2>
+            <FormGroup label="성별" req>
               <select value={gender} onChange={e => setGender(e.target.value)}>
                 <option value="남">남</option>
                 <option value="여">여</option>
               </select>
-            </F>
-            <F label="MBTI">
+            </FormGroup>
+            <FormGroup label="MBTI">
               <select value={mbti} onChange={e => setMbti(e.target.value)}>
                 {MBTIS.map(m => <option key={m}>{m}</option>)}
               </select>
-            </F>
-          </div>
-          <F label="해당 직군" req>
+            </FormGroup>
+          </Row2>
+          <FormGroup label="해당 직군" req>
             <select value={dept} onChange={e => setDept(e.target.value)}>
               {DEPTS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
             </select>
-          </F>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-            <F label="휴대폰 번호" req>
+          </FormGroup>
+          <Row2>
+            <FormGroup label="휴대폰 번호" req>
               <input placeholder="010-0000-0000" value={phone} onChange={e => setPhone(e.target.value)} inputMode="tel" />
-            </F>
-            <F label="이메일" req>
+            </FormGroup>
+            <FormGroup label="이메일" req>
               <input type="email" placeholder="example@email.com" value={email} onChange={e => setEmail(e.target.value)} />
-            </F>
-          </div>
-          <F label="자기소개">
+            </FormGroup>
+          </Row2>
+          <FormGroup label="자기소개">
             <textarea placeholder="자유롭게 소개해주세요 😊" value={intro} onChange={e => setIntro(e.target.value)} />
-          </F>
+          </FormGroup>
 
           <div className="form-section-title">🎬 취향 & 관심사 <span style={{ color: 'var(--primary)' }}>*</span></div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-            <F label="좋아하는 드라마" req>
+          <Row2>
+            <FormGroup label="좋아하는 드라마" req>
               <input placeholder="예: 도깨비" value={drama} onChange={e => setDrama(e.target.value)} />
-            </F>
-            <F label="좋아하는 영화" req>
+            </FormGroup>
+            <FormGroup label="좋아하는 영화" req>
               <input placeholder="예: 인터스텔라" value={movie} onChange={e => setMovie(e.target.value)} />
-            </F>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-            <F label="좋아하는 음악/가수" req>
+            </FormGroup>
+          </Row2>
+          <Row2>
+            <FormGroup label="좋아하는 음악/가수" req>
               <input placeholder="예: 아이유, BTS" value={music} onChange={e => setMusic(e.target.value)} />
-            </F>
-            <F label="관심사/취미" req>
+            </FormGroup>
+            <FormGroup label="관심사/취미" req>
               <input placeholder="예: 독서, 운동" value={interest} onChange={e => setInterest(e.target.value)} />
-            </F>
-          </div>
-          <F label="이상형 (연예인/가수 등)" req>
+            </FormGroup>
+          </Row2>
+          <FormGroup label="이상형 (연예인/가수 등)" req>
             <input placeholder="예: 아이유, 차은우" value={ideal} onChange={e => setIdeal(e.target.value)} />
-          </F>
+          </FormGroup>
 
           {error && <p className="error-msg" style={{ marginBottom: 10 }}>{error}</p>}
           {done && <div className="success-msg">🎉 회원가입 완료! 로그인 페이지로 이동합니다...</div>}
