@@ -4,12 +4,12 @@ import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 
 const ROOMS = [
-  { id: 'global', name: '전체 채팅', icon: '🌐', desc: '모든 회원 참여' },
-  { id: 'ai_data', name: 'AI 데이터분석', icon: '📊', desc: '데이터분석반' },
-  { id: 'ai_office', name: 'AI 사무', icon: '🖥️', desc: 'AI사무반' },
-  { id: '3d_precision', name: '3D 정밀', icon: '🎨', desc: '3D정밀반' },
-  { id: 'fire', name: '소방', icon: '🔥', desc: '소방반' },
-  { id: 'dev_special', name: '발달특화', icon: '💚', desc: '발달특화반' },
+  { id: 'global', name: '전체 채팅', icon: '🌐', desc: '모든 회원 참여', open: true },
+  { id: 'ai_data', name: 'AI 데이터분석', icon: '📊', desc: '데이터분석반 전용' },
+  { id: 'ai_office', name: 'AI 사무', icon: '🖥️', desc: 'AI사무반 전용' },
+  { id: '3d_precision', name: '3D 정밀', icon: '🎨', desc: '3D정밀반 전용' },
+  { id: 'fire', name: '소방', icon: '🔥', desc: '소방반 전용' },
+  { id: 'dev_special', name: '발달특화', icon: '💚', desc: '발달특화반 전용' },
 ];
 
 export default function Chat() {
@@ -36,6 +36,12 @@ export default function Chat() {
 
   const currentRoom = ROOMS.find(r => r.id === room);
 
+  // 내가 입장 가능한 방인지 확인
+  const canEnter = (r) => r.id === 'global' || r.id === me?.dept;
+
+  // DM 방 (1:1 채팅)
+  const dmRooms = Object.keys(chatMessages).filter(k => k.startsWith('dm_') && k.includes(user.id));
+
   return (
     <>
       <Navbar />
@@ -46,23 +52,52 @@ export default function Chat() {
           <div className="chat-sidebar">
             <div className="chat-sidebar-header">💬 채팅방</div>
             <div className="chat-rooms">
-              {ROOMS.map(r => (
-                <div key={r.id} className={`chat-room-item ${room === r.id ? 'active' : ''}`} onClick={() => setRoom(r.id)}>
-                  <div className="chat-room-icon">{r.icon}</div>
-                  <div>
-                    <div className="chat-room-name">{r.name}</div>
-                    <div className="chat-room-desc">{r.desc}</div>
+              {/* 일반 채팅방 */}
+              {ROOMS.map(r => {
+                const locked = !canEnter(r);
+                return (
+                  <div key={r.id}
+                    className={`chat-room-item ${room === r.id ? 'active' : ''} ${locked ? '' : ''}`}
+                    onClick={() => { if (!locked) setRoom(r.id); }}
+                    style={{ opacity: locked ? 0.45 : 1, cursor: locked ? 'not-allowed' : 'pointer' }}
+                  >
+                    <div className="chat-room-icon">{r.icon}</div>
+                    <div style={{ flex: 1 }}>
+                      <div className="chat-room-name">{r.name}</div>
+                      <div className="chat-room-desc">{r.desc}</div>
+                    </div>
+                    {locked && <div style={{ fontSize: 14 }}>🔒</div>}
                   </div>
-                </div>
-              ))}
+                );
+              })}
+
+              {/* 1:1 DM 채팅방 */}
+              {dmRooms.length > 0 && (
+                <>
+                  <div style={{ padding: '10px 16px 4px', fontSize: 11, fontWeight: 700, color: 'var(--muted)', borderTop: '1px solid var(--border)', marginTop: 4 }}>💌 1:1 채팅</div>
+                  {dmRooms.map(dmKey => {
+                    const otherId = dmKey.replace('dm_', '').replace(user.id, '').replace('_', '');
+                    const other = getMember(otherId);
+                    return (
+                      <div key={dmKey} className={`chat-room-item ${room === dmKey ? 'active' : ''}`} onClick={() => setRoom(dmKey)}>
+                        <div className="chat-room-icon">{other?.gender === '남' ? '👦' : '👧'}</div>
+                        <div>
+                          <div className="chat-room-name">@{otherId}</div>
+                          <div className="chat-room-desc">{other?.namePublic ? other?.name : other?.name?.charAt(0) + '**'}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
             </div>
           </div>
 
           {/* 채팅 메인 */}
           <div className="chat-main">
             <div className="chat-header">
-              {currentRoom?.icon} {currentRoom?.name}
-              <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 400, marginLeft: 8 }}>{currentRoom?.desc}</span>
+              {currentRoom?.icon || '💌'} {currentRoom?.name || room.replace('dm_', 'DM: ')}
+              <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 400, marginLeft: 8 }}>{currentRoom?.desc || '1:1 채팅'}</span>
             </div>
 
             <div className="chat-messages">
@@ -72,7 +107,6 @@ export default function Chat() {
                   첫 메시지를 남겨보세요!
                 </div>
               )}
-
               {messages.map((msg, i) => {
                 const isMine = msg.from === user.id;
                 const sender = getMember(msg.from);
@@ -80,45 +114,28 @@ export default function Chat() {
                 const showSender = !prev || prev.from !== msg.from;
                 return (
                   <div key={msg.id || i} className={`chat-bubble-wrap ${isMine ? 'mine' : ''}`}>
-
-                    {/* 내 아이콘 */}
                     {isMine && (
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, flexShrink: 0 }}>
                         <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#fce7f3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, overflow: 'hidden' }}>
-                          {me?.avatar
-                            ? <img src={me.avatar} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-                            : (me?.gender === '여' ? '👧' : '👦')}
+                          {me?.avatar ? <img src={me.avatar} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (me?.gender === '여' ? '👧' : '👦')}
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--muted)', whiteSpace: 'nowrap' }}>나</div>
                       </div>
                     )}
-
-                    {/* 상대방 아이콘 */}
                     {!isMine && (
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, flexShrink: 0 }}>
                         <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--bg2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, overflow: 'hidden' }}>
-                          {sender?.avatar
-                            ? <img src={sender.avatar} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-                            : (sender?.gender === '남' ? '👦' : '👧')}
+                          {sender?.avatar ? <img src={sender.avatar} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (sender?.gender === '남' ? '👦' : '👧')}
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--muted)', whiteSpace: 'nowrap' }}>@{msg.from}</div>
                       </div>
                     )}
-
-                    {/* 말풍선 */}
                     <div>
-                      {!isMine && showSender && (
-                        <div className="chat-sender">@{msg.from}</div>
-                      )}
-                      <div
-                        className={`chat-bubble ${isMine ? 'mine' : ''}`}
-                        style={{ minWidth: 60, maxWidth: '100%', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}
-                      >
+                      {!isMine && showSender && <div className="chat-sender">@{msg.from}</div>}
+                      <div className={`chat-bubble ${isMine ? 'mine' : ''}`} style={{ minWidth: 60, maxWidth: '100%', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
                         {msg.text}
                       </div>
                     </div>
-
-                    {/* 시간 */}
                     <div className="chat-time">{msg.time}</div>
                   </div>
                 );
@@ -126,10 +143,9 @@ export default function Chat() {
               <div ref={bottomRef} />
             </div>
 
-            {/* 입력창 */}
             <div className="chat-input-row">
               <input
-                placeholder={`${currentRoom?.name}에 메시지 보내기...`}
+                placeholder={`${currentRoom?.name || ''}에 메시지 보내기...`}
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyUp={e => e.key === 'Enter' && send()}
@@ -137,7 +153,6 @@ export default function Chat() {
               <button className="btn-primary" style={{ borderRadius: 10 }} onClick={send}>전송</button>
             </div>
           </div>
-
         </div>
       </div>
     </>
