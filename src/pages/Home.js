@@ -16,7 +16,7 @@ export default function Home() {
         </p>
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
           <button className="btn-primary" style={{ width: 'auto', padding: '14px 40px', fontSize: 17, borderRadius: 50 }} onClick={() => navigate('/register')}>
-            지금 시작하기 →
+            회원가입하기 →
           </button>
           <button className="btn-outline" style={{ width: 'auto', padding: '14px 40px', fontSize: 17, borderRadius: 50 }} onClick={() => navigate('/login')}>
             로그인
