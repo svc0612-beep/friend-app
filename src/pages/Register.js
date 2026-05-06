@@ -29,6 +29,7 @@ export default function Register() {
 
   const [name, setName] = useState('');
   const [namePublic, setNamePublic] = useState(true);
+  const [age, setAge] = useState('');
   const [gender, setGender] = useState('남');
   const [dept, setDept] = useState('ai_data');
   const [mbti, setMbti] = useState('ENFP');
@@ -45,10 +46,11 @@ export default function Register() {
   const [ideal, setIdeal] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
   const [idChecked, setIdChecked] = useState(false);
   const [idMsg, setIdMsg] = useState('');
 
-  const allFilled = name && id && password && password2 && phone && email && drama && movie && music && interest && ideal && idChecked;
+  const allFilled = name && age && id && password && password2 && phone && email && drama && movie && music && interest && ideal && idChecked;
 
   const checkId = useCallback(() => {
     if (!id.trim()) { setIdMsg('아이디를 먼저 입력해주세요.'); return; }
@@ -70,14 +72,18 @@ export default function Register() {
     if (password.length < 4) { setError('비밀번호는 4자 이상이어야 합니다.'); return; }
     const formattedPhone = phone.replace(/[^0-9]/g, '').replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
     if (!/^\d{3}-\d{4}-\d{4}$/.test(formattedPhone)) { setError('휴대폰 번호 11자리를 입력해주세요.'); return; }
+    if (isNaN(age) || age < 1 || age > 100) { setError('나이를 올바르게 입력해주세요.'); return; }
 
     setLoading(true);
-    const res = await register({ name, namePublic, gender, dept, mbti, intro, id, password, phone: formattedPhone, email, drama, movie, music, interest, ideal });
+    setError('');
+    const res = await register({ name, namePublic, age: Number(age), gender, dept, mbti, intro, id, password, phone: formattedPhone, email, drama, movie, music, interest, ideal });
     if (!res.ok) { setError(res.msg); setLoading(false); return; }
 
-    // 회원가입 성공 → 자동 로그인 → 메인으로
-    await login(id, password);
-    navigate('/main');
+    setDone(true);
+    setTimeout(async () => {
+      await login(id, password);
+      navigate('/main');
+    }, 1500);
   };
 
   return (
@@ -126,26 +132,31 @@ export default function Register() {
             </FormGroup>
           </Row2>
           <Row2>
+            <FormGroup label="나이" req>
+              <input type="number" placeholder="예: 25" value={age} onChange={e=>setAge(e.target.value)} min="1" max="100" inputMode="numeric" />
+            </FormGroup>
             <FormGroup label="성별" req>
               <select value={gender} onChange={e=>setGender(e.target.value)}>
                 <option value="남">남</option>
                 <option value="여">여</option>
               </select>
             </FormGroup>
+          </Row2>
+          <Row2>
             <FormGroup label="MBTI">
               <select value={mbti} onChange={e=>setMbti(e.target.value)}>
                 {MBTIS.map(m=><option key={m}>{m}</option>)}
               </select>
             </FormGroup>
+            <FormGroup label="해당 직군" req>
+              <select value={dept} onChange={e=>setDept(e.target.value)}>
+                {DEPTS.map(d=><option key={d.value} value={d.value}>{d.label}</option>)}
+              </select>
+            </FormGroup>
           </Row2>
-          <FormGroup label="해당 직군" req>
-            <select value={dept} onChange={e=>setDept(e.target.value)}>
-              {DEPTS.map(d=><option key={d.value} value={d.value}>{d.label}</option>)}
-            </select>
-          </FormGroup>
           <Row2>
             <FormGroup label="휴대폰 번호" req>
-              <input placeholder="01012345678" value={phone} onChange={e=>setPhone(formatPhone(e.target.value))} inputMode="tel" maxLength={13} />
+              <input placeholder="01012345678 또는 010-1234-5678" value={phone} onChange={e=>setPhone(formatPhone(e.target.value))} inputMode="tel" maxLength={13} />
             </FormGroup>
             <FormGroup label="이메일" req>
               <input type="email" placeholder="example@email.com" value={email} onChange={e=>setEmail(e.target.value)} />
@@ -178,16 +189,27 @@ export default function Register() {
 
           {error && <p className="error-msg" style={{marginBottom:10}}>{error}</p>}
 
-          {!loading ? (
-            <button className="btn-primary" onClick={submit} style={{ marginTop:12, opacity:allFilled?1:0.4, cursor:allFilled?'pointer':'not-allowed' }} disabled={!allFilled}>
-              가입하기
-            </button>
-          ) : (
-            <button className="btn-primary" style={{ marginTop:12 }} disabled>가입 중...</button>
+          {done && (
+            <div className="success-msg">
+              🎉 회원가입 완료! 잠시 후 자동으로 로그인됩니다...
+            </div>
           )}
 
-          {!allFilled && !loading && (
-            <p style={{ textAlign:'center', fontSize:12, color:'var(--muted)', marginTop:8 }}>모든 항목을 입력하고 아이디 중복체크를 해야 가입 버튼이 활성화돼요</p>
+          {!done && (
+            <button
+              className="btn-primary"
+              onClick={submit}
+              style={{ marginTop:12, opacity:allFilled?1:0.4, cursor:allFilled?'pointer':'not-allowed' }}
+              disabled={!allFilled || loading}
+            >
+              {loading ? '가입 중...' : '가입하기'}
+            </button>
+          )}
+
+          {!allFilled && !done && (
+            <p style={{ textAlign:'center', fontSize:12, color:'var(--muted)', marginTop:8 }}>
+              모든 항목을 입력하고 아이디 중복체크를 해야 가입 버튼이 활성화돼요
+            </p>
           )}
 
           <p style={{ textAlign:'center', marginTop:20, fontSize:14, color:'var(--muted)' }}>
