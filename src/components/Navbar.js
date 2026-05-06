@@ -9,7 +9,7 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-brand" style={{ cursor: 'pointer' }} onClick={() => navigate('/main')}>
-        💕 이성 친구 만들기
+        💕 친구 만들기
         <div className="navbar-sub">경기남부직업능력개발원</div>
       </div>
       <div className="navbar-right">
