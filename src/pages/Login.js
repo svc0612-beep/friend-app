@@ -26,7 +26,7 @@ export default function Login() {
         <div className="card" style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 52, marginBottom: 12 }}>💕</div>
           <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>로그인</h2>
-          <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 28 }}>이성 친구 찾기에 오신 걸 환영해요!</p>
+          <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 28 }}>친구 찾기에 오신 걸 환영해요!</p>
 
           <div className="form-group" style={{ textAlign: 'left' }}>
             <label>아이디</label>
